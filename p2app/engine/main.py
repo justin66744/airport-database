@@ -51,6 +51,31 @@ class Engine:
                 self._connection = None
             yield EndApplicationEvent()
 
+        elif isinstance(event, StartContinentSearchEvent):
+            yield from self.continent_search(event)
 
+    def continent_search(self, event):
+        query = '''SELECT * FROM continent '''
+        name = event.name()
 
+        con_code = event.continent_code()
+        parameters = None
+        if name and con_code:
+            query += '''WHERE continent_code = ?
+                        AND name = ?;'''
+            parameters = (con_code, name)
+
+        elif name:
+            query += '''WHERE name = ?;'''
+            parameters = (name,)
+
+        elif con_code:
+            query += '''WHERE continent_code = ?;'''
+            parameters = (con_code,)
+
+        cursor = self._connection.execute(query, parameters)
+        final = cursor.fetchall()
+
+        for con in final:
+            yield ContinentSearchResultEvent(Continent(*con))
 
