@@ -8,6 +8,8 @@
 # This is the outermost layer of the part of the program that you'll need to build,
 # which means that YOU WILL DEFINITELY NEED TO MAKE CHANGES TO THIS FILE.
 
+import sqlite3
+from p2app.events import *
 
 
 class Engine:
@@ -19,7 +21,7 @@ class Engine:
 
     def __init__(self):
         """Initializes the engine"""
-        pass
+        self._connection = None
 
 
     def process_event(self, event):
@@ -29,4 +31,26 @@ class Engine:
         # This is a way to write a generator function that always yields zero values.
         # You'll want to remove this and replace it with your own code, once you start
         # writing your engine, but this at least allows the program to run.
-        yield from ()
+        if isinstance(event, OpenDatabaseEvent):
+            try:
+                self._connection = sqlite3.connect(event.path())
+                self._connection.execute('PRAGMA foreign_keys = ON;')
+                yield DatabaseOpenedEvent(event.path())
+            except Exception as e:
+                yield DatabaseOpenFailedEvent(str(e))
+
+        elif isinstance(event, CloseDatabaseEvent):
+            if self._connection:
+                self._connection.close()
+                self._connection = None
+            yield DatabaseClosedEvent()
+
+        elif isinstance(event, QuitInitiatedEvent):
+            if self._connection:
+                self._connection.close()
+                self._connection = None
+            yield EndApplicationEvent()
+
+
+
+
