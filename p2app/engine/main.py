@@ -72,6 +72,8 @@ class Engine:
         elif isinstance(event, SaveNewCountryEvent):
             yield from self.country_new_save(event)
 
+        elif isinstance(event, SaveCountryEvent):
+            yield from self.country_save_update(event)
 
 
     def continent_search(self, event):
