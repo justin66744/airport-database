@@ -63,6 +63,9 @@ class Engine:
         elif isinstance(event, SaveContinentEvent):
             yield from self.continent_save_update(event)
 
+        elif isinstance(event, StartCountrySearchEvent):
+            yield from self.country_search(event)
+
     def continent_search(self, event):
         query = '''SELECT * FROM continent '''
         name = event.name()
@@ -126,5 +129,32 @@ class Engine:
             yield ContinentSavedEvent(con)
         except Exception:
             yield SaveContinentFailedEvent("Couldn't modify continent")
+
+    def country_search(self, event):
+        query = '''SELECT * FROM country '''
+        name = event.name()
+        coun_code = event.country_code()
+        parameters = None
+
+        if name and coun_code:
+            query += '''WHERE country_code = ?
+                        AND name = ?;'''
+            parameters = (coun_code, name)
+
+        elif name:
+            query += '''WHERE name = ?;'''
+            parameters = (name,)
+
+        elif coun_code:
+            query += '''WHERE country_code = ?;'''
+            parameters = (coun_code,)
+
+        cursor = self._connection.execute(query, parameters)
+        final = cursor.fetchall()
+
+        for country in final:
+            yield CountrySearchResultEvent(Country(*country))
+
+
 
 
