@@ -81,6 +81,9 @@ class Engine:
         elif isinstance(event, LoadRegionEvent):
             yield from self.region_load(event)
 
+        elif isinstance(event, SaveNewRegionEvent):
+            yield from self.region_new_save(event)
+
 
     def continent_search(self, event):
         query = '''SELECT * FROM continent '''
@@ -277,6 +280,28 @@ class Engine:
             yield RegionLoadedEvent(Region(*region_data))
         else:
             yield ErrorEvent('Invalid ID')
+
+    def region_new_save(self, event):
+        reg = event.region()
+        reg_code = reg.region_code
+        loc_code = reg.local_code
+        reg_name = reg.name
+        con_id = reg.continent_id
+        coun_id = reg.country_id
+        reg_wiki = reg.wikipedia_link
+        reg_keys = reg.keywords
+        try:
+            cursor = (self._connection.execute('''INSERT INTO region (region_code, local_code, name,
+                                                                      continent_id, country_id,
+                                                                      wikipedia_link, keywords)
+                                                  VALUES (?, ?, ?, ?, ?, ?, ?);''', (reg_code, loc_code, reg_name,
+                                                                                     con_id, coun_id,
+                                                                                     reg_wiki, reg_keys)))
+            self._connection.commit()
+
+            yield RegionSavedEvent(reg)
+        except Exception:
+            yield SaveRegionFailedEvent("Couldn't save region")
 
 
 
