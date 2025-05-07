@@ -84,6 +84,9 @@ class Engine:
         elif isinstance(event, SaveNewRegionEvent):
             yield from self.region_new_save(event)
 
+        elif isinstance(event, SaveRegionEvent):
+            yield from self.region_save_update(event)
+
 
     def continent_search(self, event):
         query = '''SELECT * FROM continent '''
@@ -303,6 +306,29 @@ class Engine:
         except Exception:
             yield SaveRegionFailedEvent("Couldn't save region")
 
+    def region_save_update(self, event):
+        reg = event.region()
+        reg_id = reg.region_id
+        reg_code = reg.region_code
+        loc_code = reg.local_code
+        reg_name = reg.name
+        con_id = reg.continent_id
+        coun_id = reg.country_id
+        reg_wiki = reg.wikipedia_link
+        reg_keys = reg.keywords
 
+        try:
+            cursor = (self._connection.execute('''UPDATE region
+                                                  SET region_code = ?, local_code = ?, name = ?,
+                                                      continent_id = ?, country_id = ?,
+                                                      wikipedia_link = ?, keywords = ?
+                                                  WHERE region_id = ?;''', (reg_code, loc_code, reg_name,
+                                                                            con_id, coun_id,
+                                                                            reg_wiki, reg_keys, reg_id)))
+            self._connection.commit()
+
+            yield RegionSavedEvent(reg)
+        except Exception:
+            yield SaveRegionFailedEvent("Couldn't modify region")
 
 
