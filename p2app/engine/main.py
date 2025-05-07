@@ -54,6 +54,9 @@ class Engine:
         elif isinstance(event, StartContinentSearchEvent):
             yield from self.continent_search(event)
 
+        elif isinstance(event, LoadContinentEvent):
+            yield from self.continent_load(event)
+
     def continent_search(self, event):
         query = '''SELECT * FROM continent '''
         name = event.name()
@@ -78,4 +81,18 @@ class Engine:
 
         for con in final:
             yield ContinentSearchResultEvent(Continent(*con))
+
+    def continent_load(self, event):
+        cursor = self._connection.execute('''SELECT * FROM continent
+                                             WHERE continent_id = ?;''', (event.continent_id(),))
+
+        continent_data = cursor.fetchone()
+
+        if continent_data:
+            continent = Continent(*continent_data)
+            yield ContinentLoadedEvent(continent)
+        else:
+            yield ErrorEvent('Invalid ID')
+
+
 
