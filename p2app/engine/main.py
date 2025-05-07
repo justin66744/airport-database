@@ -69,6 +69,11 @@ class Engine:
         elif isinstance(event, LoadCountryEvent):
             yield from self.country_load(event)
 
+        elif isinstance(event, SaveNewCountryEvent):
+            yield from self.country_new_save(event)
+
+
+
     def continent_search(self, event):
         query = '''SELECT * FROM continent '''
         name = event.name()
@@ -169,4 +174,20 @@ class Engine:
         else:
             yield ErrorEvent('Invalid ID')
 
+    def country_new_save(self, event):
+        coun = event.country()
+        coun_code = coun.country_code
+        coun_name = coun.name
+        con_id = coun.continent_id
+        coun_wiki = coun.wikipedia_link
+        coun_keys = coun.keywords
+        try:
+            cursor = (self._connection.execute
+                      ('''INSERT INTO continent (country_code, name, continent_id, wikipedia_link, keywords)
+                          VALUES (?, ?, ?, ?, ?);''', (coun_code, coun_name, con_id, coun_wiki, coun_keys)))
+            self._connection.commit()
+
+            yield CountrySavedEvent(coun)
+        except Exception:
+            yield SaveCountryFailedEvent("Couldn't save country")
 
