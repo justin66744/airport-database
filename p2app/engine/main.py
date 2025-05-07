@@ -60,6 +60,9 @@ class Engine:
         elif isinstance(event, SaveNewContinentEvent):
             yield from self.continent_new_save(event)
 
+        elif isinstance(event, SaveContinentEvent):
+            yield from self.continent_save_update(event)
+
     def continent_search(self, event):
         query = '''SELECT * FROM continent '''
         name = event.name()
@@ -105,8 +108,23 @@ class Engine:
                                                  VALUES (?, ?);''', (con_code, con_name))
             self._connection.commit()
 
-            yield ContinentSavedEvent(event.continent())
+            yield ContinentSavedEvent(con)
         except Exception:
             yield SaveContinentFailedEvent("Couldn't save continent")
+
+    def continent_save_update(self, event):
+        con = event.continent()
+        con_code = con.continent_code
+        con_name = con.name
+        con_id = con.continent_id
+        try:
+            cursor = self._connection.execute('''UPDATE continent
+                                                 SET continent_code = ?, name = ?
+                                                 WHERE continent_id =?;''', (con_code, con_name, con_id))
+            self._connection.commit()
+
+            yield ContinentSavedEvent(con)
+        except Exception:
+            yield SaveContinentFailedEvent("Couldn't modify continent")
 
 
