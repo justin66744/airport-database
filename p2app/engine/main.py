@@ -182,12 +182,36 @@ class Engine:
         coun_wiki = coun.wikipedia_link
         coun_keys = coun.keywords
         try:
-            cursor = (self._connection.execute
-                      ('''INSERT INTO continent (country_code, name, continent_id, wikipedia_link, keywords)
-                          VALUES (?, ?, ?, ?, ?);''', (coun_code, coun_name, con_id, coun_wiki, coun_keys)))
+            cursor = (self._connection.execute('''INSERT INTO country (country_code, name, 
+                                                                       continent_id, wikipedia_link, keywords)
+                                                  VALUES (?, ?, ?, ?, ?);''', (coun_code, coun_name,
+                                                                               con_id, coun_wiki, coun_keys)))
             self._connection.commit()
 
             yield CountrySavedEvent(coun)
         except Exception:
             yield SaveCountryFailedEvent("Couldn't save country")
+
+    def country_save_update(self, event):
+        coun = event.country()
+        coun_id = coun.country_id
+        coun_code = coun.country_code
+        coun_name = coun.name
+        con_id = coun.continent_id
+        coun_wiki = coun.wikipedia_link
+        coun_keys = coun.keywords
+
+        try:
+            cursor = (self._connection.execute('''UPDATE country
+                                                  SET country_code = ?, name = ?, 
+                                                      continent_id = ?, wikipedia_link = ?, keywords = ?
+                                                  WHERE country_id = ?;''', (coun_code, coun_name,
+                                                                             con_id, coun_wiki, coun_keys, coun_id)))
+            self._connection.commit()
+
+            yield CountrySavedEvent(coun)
+        except Exception:
+            yield SaveCountryFailedEvent("Couldn't modify country")
+
+
 
