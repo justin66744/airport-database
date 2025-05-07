@@ -75,6 +75,9 @@ class Engine:
         elif isinstance(event, SaveCountryEvent):
             yield from self.country_save_update(event)
 
+        elif isinstance(event, StartRegionSearchEvent):
+            yield from self.region_search(event)
+
 
     def continent_search(self, event):
         query = '''SELECT * FROM continent '''
@@ -214,6 +217,52 @@ class Engine:
             yield CountrySavedEvent(coun)
         except Exception:
             yield SaveCountryFailedEvent("Couldn't modify country")
+
+    def region_search(self, event):
+        query = '''SELECT * FROM region '''
+        name = event.name()
+        local_code = event.local_code()
+        reg_code = event.region_code()
+        parameters = None
+
+        if name and local_code and reg_code:
+            query += '''WHERE region_code = ?
+                        AND local_code = ?
+                        AND name = ?;'''
+            parameters = (reg_code, local_code, name)
+
+        elif name and local_code:
+            query += '''WHERE local_code = ?
+                        AND name = ?;'''
+            parameters = (local_code, name)
+
+        elif name and reg_code:
+            query += '''WHERE region_code = ?
+                        AND name = ?;'''
+            parameters = (reg_code, name)
+
+        elif local_code and reg_code:
+            query += '''WHERE region_code = ?
+                        AND local_code = ?;'''
+            parameters = (reg_code, local_code)
+
+        elif name:
+            query += '''WHERE name = ?;'''
+            parameters = (name,)
+
+        elif local_code:
+            query += '''WHERE local_code = ?;'''
+            parameters = (local_code,)
+
+        elif reg_code:
+            query += '''WHERE region_code = ?;'''
+            parameters = (reg_code,)
+
+        cursor = self._connection.execute(query, parameters)
+        final = cursor.fetchall()
+
+        for region in final:
+            yield RegionSearchResultEvent(Region(*region))
 
 
 
