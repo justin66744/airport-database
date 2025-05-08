@@ -207,7 +207,7 @@ class Engine:
 
             yield CountrySavedEvent(coun)
         except Exception:
-            yield SaveCountryFailedEvent("Couldn't save country")
+            yield SaveCountryFailedEvent("Couldn't save country; make sure continent ID is valid")
 
     def country_save_update(self, event):
         coun = event.country()
@@ -230,7 +230,7 @@ class Engine:
 
             yield CountrySavedEvent(coun)
         except Exception:
-            yield SaveCountryFailedEvent("Couldn't modify country")
+            yield SaveCountryFailedEvent("Couldn't modify country: make sure continent ID is valid")
 
     def region_search(self, event):
         query = '''SELECT * FROM region '''
@@ -310,7 +310,7 @@ class Engine:
 
             yield RegionSavedEvent(reg)
         except Exception:
-            yield SaveRegionFailedEvent("Couldn't save region")
+            yield SaveRegionFailedEvent("Couldn't save region; make sure continent/country ID is valid")
 
     def region_save_update(self, event):
         reg = event.region()
@@ -335,4 +335,4 @@ class Engine:
 
             yield RegionSavedEvent(reg)
         except Exception:
-            yield SaveRegionFailedEvent("Couldn't modify region")
+            yield SaveRegionFailedEvent("Couldn't modify region; make sure continent/country ID is valid")
