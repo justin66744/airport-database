@@ -190,11 +190,14 @@ class Engine:
 
     def country_new_save(self, event):
         coun = event.country()
+        coun_id = coun.country_id
         coun_code = coun.country_code
         coun_name = coun.name
         con_id = coun.continent_id
         coun_wiki = coun.wikipedia_link
-        coun_keys = coun.keywords
+        coun_keys = coun.keywords if coun.keywords != '' else None
+        coun = Country(coun_id, coun_code, coun_name, con_id, coun_wiki, coun_keys)
+
         try:
             cursor = (self._connection.execute('''INSERT INTO country (country_code, name, 
                                                                        continent_id, wikipedia_link, keywords)
@@ -213,14 +216,16 @@ class Engine:
         coun_name = coun.name
         con_id = coun.continent_id
         coun_wiki = coun.wikipedia_link
-        coun_keys = coun.keywords
+        coun_keys = coun.keywords if coun.keywords != '' else None
+        coun = Country(coun_id, coun_code, coun_name, con_id, coun_wiki, coun_keys)
 
         try:
             cursor = (self._connection.execute('''UPDATE country
                                                   SET country_code = ?, name = ?, 
                                                       continent_id = ?, wikipedia_link = ?, keywords = ?
                                                   WHERE country_id = ?;''', (coun_code, coun_name,
-                                                                             con_id, coun_wiki, coun_keys, coun_id)))
+                                                                             con_id, coun_wiki,
+                                                                             coun_keys, coun_id)))
             self._connection.commit()
 
             yield CountrySavedEvent(coun)
@@ -286,20 +291,21 @@ class Engine:
 
     def region_new_save(self, event):
         reg = event.region()
+        reg_id = reg.region_id
         reg_code = reg.region_code
         loc_code = reg.local_code
         reg_name = reg.name
         con_id = reg.continent_id
         coun_id = reg.country_id
-        reg_wiki = reg.wikipedia_link
-        reg_keys = reg.keywords
+        reg_wiki = reg.wikipedia_link if reg.wikipedia_link != '' else None
+        reg_keys = reg.keywords if reg.keywords != '' else None
+        reg = Region(reg_id, reg_code, loc_code, reg_name, con_id, coun_id, reg_wiki, reg_keys)
         try:
-            cursor = (self._connection.execute('''INSERT INTO region (region_code, local_code, name,
+            cursor = self._connection.execute('''INSERT INTO region (region_code, local_code, name,
                                                                       continent_id, country_id,
                                                                       wikipedia_link, keywords)
                                                   VALUES (?, ?, ?, ?, ?, ?, ?);''', (reg_code, loc_code, reg_name,
-                                                                                     con_id, coun_id,
-                                                                                     reg_wiki, reg_keys)))
+                                                                                     con_id, coun_id, reg_wiki, reg_keys))
             self._connection.commit()
 
             yield RegionSavedEvent(reg)
@@ -314,9 +320,9 @@ class Engine:
         reg_name = reg.name
         con_id = reg.continent_id
         coun_id = reg.country_id
-        reg_wiki = reg.wikipedia_link
-        reg_keys = reg.keywords
-
+        reg_wiki = reg.wikipedia_link if reg.wikipedia_link != '' else None
+        reg_keys = reg.keywords if reg.keywords != '' else None
+        reg = Region(reg_id, reg_code, loc_code, reg_name, con_id, coun_id, reg_wiki, reg_keys)
         try:
             cursor = (self._connection.execute('''UPDATE region
                                                   SET region_code = ?, local_code = ?, name = ?,
