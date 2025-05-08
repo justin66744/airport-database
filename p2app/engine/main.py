@@ -36,8 +36,8 @@ class Engine:
                 self._connection = sqlite3.connect(event.path())
                 self._connection.execute('PRAGMA foreign_keys = ON;')
                 yield DatabaseOpenedEvent(event.path())
-            except Exception as e:
-                yield DatabaseOpenFailedEvent(str(e))
+            except Exception:
+                yield DatabaseOpenFailedEvent("Couldn't open the database")
 
         elif isinstance(event, CloseDatabaseEvent):
             if self._connection:
@@ -330,5 +330,3 @@ class Engine:
             yield RegionSavedEvent(reg)
         except Exception:
             yield SaveRegionFailedEvent("Couldn't modify region")
-
-
